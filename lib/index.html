@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Hapi Chat Service</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px 'inconsolata',menlo,consolas,monospaced; }
+      form { background: #6f6f6f; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 87%; margin-right: .5%; }
+      form button { width: 12%; background: #f6941e; border: none; padding: 10px; font-family: 'inconsolata',menlo,consolas,monospaced; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #f8f8f8 }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="/static/bundle.js"></script>
+    <script type="text/javascript">
+      var roomId = getQueryParameter('id') ? getQueryParameter('id') : 'general';
+      var path = '/chatroom/' + roomId;
+
+      // Load the Websocket client library
+      var client = new nes.Client('ws://localhost:3001');
+
+      // Set an onConnect listener & connect to the service
+      client.onConnect = function () {
+          console.log('Service Connected');
+      };
+      client.connect(function (err) { 
+        console.log(err) 
+      });
+
+      // Subscribe to a websocket channel
+      client.subscribe(path, function(err, msg) {
+
+        var li = document.createElement('li');
+        li.innerText = msg.message;
+        document.getElementById('messages').appendChild(li);
+      });
+
+      // Send Messages on form submit
+      document.querySelector('form').onsubmit = function(event){
+        event.preventDefault();
+
+        var message = {
+          method: 'POST',
+          path: path,
+          payload: {
+            message: document.getElementById('m').value
+          }
+        }
+        client.request(message, function(err, res) {
+          console.log(arguments);
+        })
+        document.getElementById('m').value = "";
+        return false;
+      }
+
+      // Get the query parameter to use as Room ID
+      function getQueryParameter(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"), results = regex.exec(location.search);
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+    </script>
+  </body>
+</html>

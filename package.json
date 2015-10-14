@@ -1,0 +1,26 @@
+{
+  "name": "nes-chat-app",
+  "version": "1.0.0",
+  "description": "Sample app to demonstrate nes",
+  "main": "./lib/server.js",
+  "dependencies": {
+    "inert": "^3.1.0",
+    "blipp": "^2.3.0",
+    "hapi": "^10.4.1",
+    "hoek": "^2.16.3",
+    "nes": "^1.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node ./lib/server.js"
+  },
+  "keywords": [
+    "hapi",
+    "hapijs",
+    "nes",
+    "chat",
+    "example"
+  ],
+  "author": "John Brett johnbrett7@gmail.com",
+  "license": "MIT"
+}
