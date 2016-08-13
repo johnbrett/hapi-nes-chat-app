@@ -4,15 +4,20 @@
   "description": "Sample app to demonstrate nes",
   "main": "./lib/server.js",
   "dependencies": {
-    "inert": "^3.1.0",
     "blipp": "^2.3.0",
+    "bunyan": "^1.8.1",
+    "bunyan-format": "^0.2.1",
     "hapi": "^10.4.1",
+    "hapi-swagger": "^6.2.2",
     "hoek": "^2.16.3",
-    "nes": "^1.0.0"
+    "inert": "^3.1.0",
+    "nes": "^1.0.0",
+    "vision": "^4.1.0"
   },
   "devDependencies": {},
   "scripts": {
-    "start": "node ./lib/server.js"
+    "start": "node ./lib/server.js",
+    "dev": "nodemon ./lib/server.js"
   },
   "keywords": [
     "hapi",

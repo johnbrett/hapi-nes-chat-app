@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>The Hapi Chat Service</title>
     <style>
@@ -12,6 +11,9 @@
       form button { width: 12%; background: #f6941e; border: none; padding: 10px; font-family: 'inconsolata',menlo,consolas,monospaced; }
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages li { padding: 5px 10px; }
+      #messages li .info { color: gray; }
+      #messages li .error { color: red; }
+      #messages li img { height: 75px; }
       #messages li:nth-child(odd) { background: #f8f8f8 }
     </style>
   </head>
@@ -22,30 +24,41 @@
     </form>
     <script src="/static/bundle.js"></script>
     <script type="text/javascript">
-      var roomId = getQueryParameter('id') ? getQueryParameter('id') : 'general';
-      var path = '/chatroom/' + roomId;
+      const roomId = getQueryParameter('id') ? getQueryParameter('id') : 'general';
+      const path = '/api/chatroom/' + roomId;
+
+      addMessage('Connecting to chat service...', 'info');
 
       // Load the Websocket client library
-      var client = new nes.Client('ws://localhost:3001');
+      const client = new nes.Client('ws://localhost:3000');
 
       // Set an onConnect listener & connect to the service
-      client.onConnect = function () {
-          console.log('Service Connected');
+      let connected = false;
+      client.onConnect = () => {
+
+        if (connected) { return; }
+        connected = true;
+
+        let message = `Connected to chat room: ${roomId}.`;
+        message += roomId === 'general' ? ' If you want your own private room use a url like: <a href="/?id=secret-room">/?id=secret-room</a>' : ''
+        
+        addMessage(message, 'info');
+
+        client.request(path, (err, messages) => {
+          if (err) {
+            return addMessage(err, 'error');
+          }
+
+          messages.forEach((m) => addMessage(m.message))
+        })
       };
-      client.connect(function (err) { 
-        console.log(err) 
-      });
+      client.connect((err) => addMessage(err, 'error'));
 
       // Subscribe to a websocket channel
-      client.subscribe(path, function(err, msg) {
-
-        var li = document.createElement('li');
-        li.innerText = msg.message;
-        document.getElementById('messages').appendChild(li);
-      });
+      client.subscribe(path, (msg) => addMessage(msg.message), (err) => addMessage(err, 'error'));
 
       // Send Messages on form submit
-      document.querySelector('form').onsubmit = function(event){
+      document.querySelector('form').onsubmit = (event) => {
         event.preventDefault();
 
         var message = {
@@ -55,9 +68,7 @@
             message: document.getElementById('m').value
           }
         }
-        client.request(message, function(err, res) {
-          console.log(arguments);
-        })
+        client.request(message, (err, res) => console.log(err, res));
         document.getElementById('m').value = "";
         return false;
       }
@@ -67,6 +78,17 @@
         name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
         var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"), results = regex.exec(location.search);
         return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      // Add message to the chat room
+      function addMessage (message, className = '') {
+
+        if (!message) { return; }
+
+        console.log(className, message);
+        const li = document.createElement('li');
+        li.innerHTML = `<p class="${className}">${message}</p>`;
+        document.getElementById('messages').appendChild(li);
       }
     </script>
   </body>
