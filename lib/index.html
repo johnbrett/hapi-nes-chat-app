@@ -30,7 +30,8 @@
       addMessage('Connecting to chat service...', 'info');
 
       // Load the Websocket client library
-      const client = new nes.Client('ws://localhost:3000');
+      const protocol = window.location.protocol.indexOf('https') === -1 ? 'ws' : 'wss'
+      const client = new nes.Client(`${protocol}://${window.location.host}`);
 
       // Set an onConnect listener & connect to the service
       let connected = false;
