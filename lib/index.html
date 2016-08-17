@@ -24,7 +24,7 @@
     </form>
     <script src="/static/bundle.js"></script>
     <script type="text/javascript">
-      const roomId = getQueryParameter('id') ? getQueryParameter('id') : 'general';
+      const roomId = getQueryParameter('id') ? getQueryParameter('id') : 'public';
       const path = '/api/chatroom/' + roomId;
 
       addMessage('Connecting to chat service...', 'info');
@@ -41,7 +41,11 @@
         connected = true;
 
         let message = `Connected to chat room: ${roomId}.`;
-        message += roomId === 'general' ? ' If you want your own private room use a url like: <a href="/?id=secret-room">/?id=secret-room</a>' : ''
+        if (roomId === 'public') {
+          message += ' If you want your own private room use a url like: <a href="/?id=secret-room">/?id=secret-room</a>';
+        } else {
+          message += ' You can return to the <a href="/">public chat room here</a>.';
+        }
         
         addMessage(message, 'info');
 
