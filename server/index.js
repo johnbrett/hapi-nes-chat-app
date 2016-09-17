@@ -92,7 +92,7 @@ server.register([
       handler: (request, reply) => {
 
         const roomId = request.params.id ? request.params.id : 'public';
-        const message = { message: request.payload.message };
+        const message = { message: request.payload.message, user: request.auth.credentials };
         chatrooms[roomId] ? chatrooms[roomId].messages.push(message) : chatrooms[roomId] = {messages: [message]};
 
         server.publish(`/api/chatroom/${roomId}`, message);

@@ -10,10 +10,12 @@
       form input { border: 0; padding: 10px; width: 87%; margin-right: .5%; }
       form button { width: 12%; background: #f6941e; border: none; padding: 10px; font-family: 'inconsolata',menlo,consolas,monospaced; }
       #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
+      #messages li { padding: 5px 10px; min-height: 50px; }
       #messages li .info { color: gray; }
       #messages li .error { color: red; }
-      #messages li img { height: 75px; }
+      #messages li .messageAvatar { display: table-cell; vertical-align: middle; width: 50px; height: 50px; }
+      #messages li .messageAvatar img { height: 35px; border-radius: 20px; float: left; }
+      #messages li .messageContent {   display: table-cell; vertical-align: middle; min-height: 50px; }
       #messages li:nth-child(odd) { background: #f8f8f8 }
     </style>
   </head>
@@ -29,7 +31,7 @@
       const roomId = getQueryParameter('id') ? getQueryParameter('id') : 'public';
       const path = '/api/chatroom/' + roomId;
 
-      addMessage('Connecting to chat service...', 'info');
+      addMessage({message: 'Connecting to chat service...'}, 'info');
 
       // Load the Websocket client library
       const protocol = window.location.protocol.indexOf('https') === -1 ? 'ws' : 'wss'
@@ -49,19 +51,19 @@
           message += ' You can return to the <a href="/">public chat room here</a>.';
         }
 
-        addMessage(message, 'info');
+        addMessage({ message: message }, 'info');
 
         // get chat history
         client.request(path, (err, messages) => {
           if (err) { return addMessage(err, 'error'); }
 
-          messages.forEach((m) => addMessage(m.message))
+          messages.forEach((msg) => addMessage(msg))
         })
       };
       client.connect({ auth: { headers: { cookie: document.cookie }}}, (err) => addMessage(err, 'error'));
 
       // Subscribe to a websocket channel
-      client.subscribe(path, (msg) => addMessage(msg.message), (err) => addMessage(err, 'error'));
+      client.subscribe(path, (msg) => addMessage(msg), (err) => addMessage(err, 'error'));
 
       // Send Messages on form submit
       document.querySelector('form').onsubmit = (event) => {
@@ -80,13 +82,24 @@
       }
 
       // Add message to the chat room
-      function addMessage (message, className = '') {
-
+      function addMessage (msg, className = '') {
+        const message = (msg && msg.message) || msg;
+        const user = (msg && msg.user) || { avatarUrl: 'https://www.gravatar.com/avatar/7ab6f2ffeeda8d9392fe5034796e75cd.jpg?s=35&d=mm' }
         if (!message) { return; }
 
         console.log(className, message);
         const li = document.createElement('li');
-        li.innerHTML = `<p class="${className}">${message}</p>`;
+        li.innerHTML = `
+          <div>
+            <div class="messageAvatar">
+              <a href="https://github.com/${user.username}" target="_blank"><img src="${user.avatarUrl}" /></a>
+            </div>
+            <div class="messageContent">
+              <h4>${user.displayName}</h4>
+              <p class="${className}">${message}</p>
+            </div>
+          </div>
+        `;
         document.getElementById('messages').appendChild(li);
       }
 
