@@ -18,7 +18,9 @@
     </style>
   </head>
   <body>
+    <div>
     <ul id="messages"></ul>
+    </div>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
@@ -46,18 +48,17 @@
         } else {
           message += ' You can return to the <a href="/">public chat room here</a>.';
         }
-        
+
         addMessage(message, 'info');
 
+        // get chat history
         client.request(path, (err, messages) => {
-          if (err) {
-            return addMessage(err, 'error');
-          }
+          if (err) { return addMessage(err, 'error'); }
 
           messages.forEach((m) => addMessage(m.message))
         })
       };
-      client.connect((err) => addMessage(err, 'error'));
+      client.connect({ auth: { headers: { cookie: document.cookie }}}, (err) => addMessage(err, 'error'));
 
       // Subscribe to a websocket channel
       client.subscribe(path, (msg) => addMessage(msg.message), (err) => addMessage(err, 'error'));
@@ -66,7 +67,7 @@
       document.querySelector('form').onsubmit = (event) => {
         event.preventDefault();
 
-        var message = {
+        const message = {
           method: 'POST',
           path: path,
           payload: {
@@ -76,13 +77,6 @@
         client.request(message, (err, res) => console.log(err, res));
         document.getElementById('m').value = "";
         return false;
-      }
-
-      // Get the query parameter to use as Room ID
-      function getQueryParameter(name) {
-        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"), results = regex.exec(location.search);
-        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
       }
 
       // Add message to the chat room
@@ -95,6 +89,13 @@
         li.innerHTML = `<p class="${className}">${message}</p>`;
         document.getElementById('messages').appendChild(li);
       }
+
+      //Get the query parameter to use as Room ID
+      function getQueryParameter(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        const regex = new RegExp("[\\?&]" + name + "=([^&#]*)"), results = regex.exec(location.search);
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
     </script>
-  </body>
+    </body>
 </html>

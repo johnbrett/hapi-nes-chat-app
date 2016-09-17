@@ -1,19 +1,22 @@
 {
   "name": "nes-chat-app",
-  "version": "1.0.0",
-  "description": "Sample app to demonstrate nes",
-  "main": "./lib/server.js",
+  "private": true,
+  "description": "Simple sample chat app",
+  "main": "./server/index.js",
   "dependencies": {
+    "bell": "^8.1.1",
     "blipp": "^2.3.0",
     "bunyan": "^1.8.1",
     "bunyan-format": "^0.2.1",
-    "good": "^7.0.1",
+    "good": "^7.0.2",
     "good-bunyan": "^1.0.0",
-    "hapi": "^14.2.0",
+    "hapi": "^15.0.3",
+    "hapi-auth-bearer-token": "^4.2.1",
+    "hapi-auth-cookie": "^6.1.1",
     "hapi-swagger": "^6.2.2",
     "hoek": "^4.0.2",
-    "inert": "^4.0.1",
-    "nes": "^6.2.5",
+    "inert": "^4.0.2",
+    "nes": "^6.3.1",
     "vision": "^4.1.0"
   },
   "devDependencies": {},
@@ -21,8 +24,9 @@
     "node": "4.x.x"
   },
   "scripts": {
-    "start": "node ./lib/server.js",
-    "dev": "nodemon ./lib/server.js"
+    "start": "node ./server/index.js",
+    "dev": "nodemon ./server/index.js",
+    "deploy": "now -e CHAT_APP_AUTH_GITHUB_CLIENTID -e CHAT_APP_AUTH_GITHUB_CLIENTSECRET"
   },
   "keywords": [
     "hapi",
