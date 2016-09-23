@@ -8,7 +8,7 @@ const Inert = require('inert');
 const Vision = require('vision');
 const Blipp = require('blipp');
 const Hoek = require('hoek');
-const HapiSwagger = require('hapi-swagger');
+// const HapiSwagger = require('hapi-swagger');
 const Path = require('path');
 const Good = require('good');
 const Bunyan = require('bunyan');
@@ -46,9 +46,12 @@ const server = new Hapi.Server();
 server.connection({ port: config.server.port });
 
 server.register([
-    { register: Nes, options: { auth: { type: 'direct' } } }, Bell, CookieAuth, BearerAuth, Inert,
-    { register: Blipp, options: { showAuth: true } }, Vision, HapiSwagger,
-    { register: Good, options: internals.goodOptions}
+    { register: Nes, options: { auth: { type: 'direct' } } },   // websocket
+    Bell, BearerAuth, CookieAuth,                               // auth strategies
+    Inert, Vision,                                              // static files & templating
+    { register: Blipp, options: { showAuth: true } },           // display routes on startup
+    // HapiSwagger,                                                // auth gen API docs
+    { register: Good, options: internals.goodOptions}           // logging
 ], (err) => {
 
   Hoek.assert(!err, err);
@@ -59,6 +62,23 @@ server.register([
   server.subscription('/api/chatroom/{id}');
 
   server.auth.strategy('github', 'bell', config.auth.github);
+
+  // server.auth.strategy('session', 'bearer-access-token', {
+  //   allowCookieToken: true,
+  //   validateFunc: (token, callback) => {
+  //     cache.get(token, (err, cached) => {
+
+  //         if (err) {
+  //             return callback(err, false);
+  //         }
+  //         if (!cached) {
+  //             return callback(null, false);
+  //         }
+
+  //         return callback(null, true, cached.account);
+  //     });
+  //   }
+  // })
 
   server.auth.strategy('session', 'cookie', true, {
     cookie: 'session',
@@ -85,38 +105,6 @@ server.register([
   const chatrooms = {};
 
   server.route([{
-    method: 'POST',
-    path: '/api/chatroom/{id*}',
-    config: {
-      description: 'Chat message handler',
-      handler: (request, reply) => {
-
-        const roomId = request.params.id ? request.params.id : 'public';
-        const message = { message: request.payload.message, user: request.auth.credentials };
-        chatrooms[roomId] ? chatrooms[roomId].messages.push(message) : chatrooms[roomId] = {messages: [message]};
-
-        server.publish(`/api/chatroom/${roomId}`, message);
-        server.log('info', `new message in: /chatroom/${roomId}: ${message.message}`);
-        return reply(message);
-      },
-      tags: ['api']
-    }
-  },
-  {
-    method: 'GET',
-    path: '/api/chatroom/{id*}',
-    config: {
-      description: 'Get chat history',
-      handler: (request, reply) => {
-
-        const roomId = request.params.id ? request.params.id : 'public';
-        const chatHistory = chatrooms[roomId] ? chatrooms[roomId].messages : [{message: 'You are the first here!'}];
-        return reply(chatHistory);
-      },
-      tags: ['api']
-    }
-  },
-  {
     method: '*',
     path: '/auth/callback',
     config: {
@@ -132,6 +120,13 @@ server.register([
           displayName: profile.displayName,
           avatarUrl: profile.raw.avatar_url,
           githubUrl: profile.raw.url
+        }
+
+        if (!account) {
+          return reply({
+            something: 'went wrong',
+            auth: request.auth
+          })
         }
         const sid = String(++internals.uuid);
         request.server.app.cache.set(sid, { account: account }, 0, (err) => {
@@ -162,6 +157,38 @@ server.register([
 
         return reply.file('./client/index.html' , {confine: false});
       }
+    }
+  },
+  {
+    method: 'POST',
+    path: '/api/chatroom/{id*}',
+    config: {
+      description: 'Chat message handler',
+      handler: (request, reply) => {
+
+        const roomId = request.params.id ? request.params.id : 'public';
+        const message = { message: request.payload.message, user: request.auth.credentials };
+        chatrooms[roomId] ? chatrooms[roomId].messages.push(message) : chatrooms[roomId] = {messages: [message]};
+
+        server.publish(`/api/chatroom/${roomId}`, message);
+        server.log('info', `new message in: /chatroom/${roomId}: ${message.message}`);
+        return reply(message);
+      },
+      tags: ['api']
+    }
+  },
+  {
+    method: 'GET',
+    path: '/api/chatroom/{id*}',
+    config: {
+      description: 'Get chat history',
+      handler: (request, reply) => {
+
+        const roomId = request.params.id ? request.params.id : 'public';
+        const chatHistory = chatrooms[roomId] ? chatrooms[roomId].messages : [{message: 'You are the first here!'}];
+        return reply(chatHistory);
+      },
+      tags: ['api']
     }
   },
   {
