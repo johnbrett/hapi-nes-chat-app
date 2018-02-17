@@ -9,7 +9,7 @@
     "bunyan": "^1.8.1",
     "bunyan-format": "^0.2.1",
     "good": "^7.0.2",
-    "good-bunyan": "^1.0.0",
+    "good-bunyan": "^2.0.0",
     "hapi": "^15.0.3",
     "hapi-auth-bearer-token": "^4.2.1",
     "hapi-auth-cookie": "^6.1.1",
